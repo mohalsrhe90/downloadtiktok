@@ -58,20 +58,25 @@ def download_video(message):
     output_path = f"{file_id}.mp4"
 
     try:
-        # تحميل الفيديو باستخدام yt-dlp
-        subprocess.run([
+        # تحميل الفيديو باستخدام yt-dlp مع معالجة الأخطاء
+        result = subprocess.run([
             "yt-dlp",
-            "-f", "mp4",
+            "-f", "best",  # أفضل جودة متاحة
             "-o", output_path,
             url
-        ], check=True)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        # إرسال الفيديو
-        with open(output_path, 'rb') as video:
-            bot.send_video(message.chat.id, video)
+        if result.returncode == 0 and os.path.exists(output_path):
+            with open(output_path, 'rb') as video:
+                bot.send_video(message.chat.id, video)
+        else:
+            error_message = result.stderr.decode()
+            print("🔴 yt-dlp Error:\n", error_message)
+            bot.send_message(message.chat.id, "❌ فشل التحميل، تأكد من أن الرابط صحيح ومدعوم.")
 
     except Exception as e:
-        bot.send_message(message.chat.id, f"❌ حدث خطأ أثناء التحميل.")
+        print("🔴 Exception:", str(e))
+        bot.send_message(message.chat.id, "❌ حدث خطأ غير متوقع أثناء التحميل.")
 
     finally:
         # حذف الفيديو بعد الإرسال
