@@ -71,7 +71,7 @@ def download_video(message):
             bot.send_video(message.chat.id, video)
 
     except Exception as e:
-        bot.send_message(message.chat.id, f"❌ حدث خطأ: {str(e)}")
+        bot.send_message(message.chat.id, f"❌ حدث خطأ أثناء التحميل.")
 
     finally:
         # حذف الفيديو بعد الإرسال
@@ -88,9 +88,9 @@ def webhook():
 
 @app.route("/")
 def index():
-    return "بوت تحميل الفيديوهات شغال ✅"
+    return "✅ البوت شغال"
 
 if __name__ == "__main__":
     bot.remove_webhook()
-    bot.set_webhook(url="https://YOUR_RENDER_URL.onrender.com/" + API_TOKEN)
+    bot.set_webhook(url="https://downloadtiktok-9cxz.onrender.com/" + API_TOKEN)
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
