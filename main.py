@@ -48,38 +48,44 @@ def download_video(message):
 
     url = message.text.strip()
     if not url.startswith("http"):
-        bot.send_message(message.chat.id, "❌ أرسل رابط صحيح.")
+        bot.send_message(message.chat.id, "❌ أرسل رابط صحيح يبدأ بـ http.")
         return
 
-    bot.send_message(message.chat.id, "⏳ جاري التحميل، يرجى الانتظار...")
+    bot.send_message(message.chat.id, "⏳ جاري تحميل الفيديو، انتظر لحظة...")
 
-    # إنشاء اسم ملف مؤقت
+    # طباعة إصدار yt-dlp (للتأكد من توفره في البيئة)
+    try:
+        subprocess.run(["yt-dlp", "--version"], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    except Exception as e:
+        bot.send_message(message.chat.id, "❌ yt-dlp غير مثبت أو لا يعمل على السيرفر.")
+        return
+
+    # اسم الملف المؤقت
     file_id = str(uuid.uuid4())
     output_path = f"{file_id}.mp4"
 
     try:
-        # تحميل الفيديو باستخدام yt-dlp مع معالجة الأخطاء
         result = subprocess.run([
-            "yt-dlp",
-            "-f", "best",  # أفضل جودة متاحة
-            "-o", output_path,
-            url
+            "yt-dlp", "-f", "mp4", "-o", output_path, url
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        if result.returncode == 0 and os.path.exists(output_path):
-            with open(output_path, 'rb') as video:
-                bot.send_video(message.chat.id, video)
-        else:
-            error_message = result.stderr.decode()
-            print("🔴 yt-dlp Error:\n", error_message)
-            bot.send_message(message.chat.id, "❌ فشل التحميل، تأكد من أن الرابط صحيح ومدعوم.")
+        # التحقق من نجاح التحميل
+        if result.returncode != 0:
+            error_msg = result.stderr.decode()
+            print(f"🔴 yt-dlp Error:\n{error_msg}")
+            bot.send_message(message.chat.id, f"❌ فشل التحميل:\n{error_msg[:400]}")  # عرض أول 400 حرف من الخطأ
+            return
+
+        # إرسال الفيديو
+        with open(output_path, 'rb') as video:
+            bot.send_video(message.chat.id, video)
 
     except Exception as e:
-        print("🔴 Exception:", str(e))
-        bot.send_message(message.chat.id, "❌ حدث خطأ غير متوقع أثناء التحميل.")
+        bot.send_message(message.chat.id, f"❌ حدث خطأ أثناء التحميل:\n{str(e)}")
+        print(f"⛔️ Exception: {str(e)}")
 
     finally:
-        # حذف الفيديو بعد الإرسال
+        # حذف الملف
         if os.path.exists(output_path):
             os.remove(output_path)
 
