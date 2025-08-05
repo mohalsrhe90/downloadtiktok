@@ -66,14 +66,18 @@ def download_video(message):
 
     try:
         result = subprocess.run([
-            "yt-dlp", "-f", "mp4", "-o", output_path, url
+            "yt-dlp",
+            "--cookies", "cookies.txt",   # ← استخدام الكوكيز هنا
+            "-f", "mp4",
+            "-o", output_path,
+            url
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         # التحقق من نجاح التحميل
         if result.returncode != 0:
             error_msg = result.stderr.decode()
             print(f"🔴 yt-dlp Error:\n{error_msg}")
-            bot.send_message(message.chat.id, f"❌ فشل التحميل:\n{error_msg[:400]}")  # عرض أول 400 حرف من الخطأ
+            bot.send_message(message.chat.id, f"❌ فشل التحميل:\n{error_msg[:400]}")
             return
 
         # إرسال الفيديو
